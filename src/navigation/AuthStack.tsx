@@ -4,7 +4,9 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Login from "../screens/auth/Login";
 import Register from "../screens/auth/Register";
 import ForgetPassword from "../screens/auth/ForgetPassword";
-
+import First from "../screens/auth/First";
+import Policy
+ from "../screens/auth/Policy";
 const AuthStack = createNativeStackNavigator();
 const Auth = () => {
   return (
@@ -13,7 +15,9 @@ const Auth = () => {
         headerShown: false,
       }}
     >
+      <AuthStack.Screen name="First" component={First} />
       <AuthStack.Screen name="Login" component={Login} />
+      <AuthStack.Screen name="Policy" component={Policy} />
       <AuthStack.Screen name="Register" component={Register} />
       <AuthStack.Screen name="ForgetPassword" component={ForgetPassword} />
     </AuthStack.Navigator>

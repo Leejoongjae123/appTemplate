@@ -3,6 +3,7 @@ import React from "react";
 import { ThemeProvider } from "react-native-rapi-ui";
 import Navigation from "./src/navigation";
 import { AuthProvider } from "./src/provider/AuthProvider";
+import { Modal } from "react-native";
 
 export default function App() {
   const images = [

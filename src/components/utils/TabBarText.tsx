@@ -10,7 +10,7 @@ export default ({ title, focused }: { title: string; focused: boolean }) => {
         color: focused
           ? isDarkmode
             ? themeColor.white100
-            : themeColor.primary
+            : "#F90"
           : "rgb(143, 155, 179)",
         fontSize: 10,
       }}
