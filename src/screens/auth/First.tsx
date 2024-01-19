@@ -17,7 +17,7 @@ import { AuthStackParamList } from "../../types/navigation";
 import { useSpring, animated } from "react-spring";
 import Animated,{useSharedValue,useDerivedValue,withTiming,useAnimatedProps} from 'react-native-reanimated';
 import { supabase } from "../../initSupabase";
-
+import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 
 
 const First = ({
@@ -186,17 +186,17 @@ const styles = StyleSheet.create({
     paddingTop: "3%",
   },
   icon: {
-    top: -20,
+    top: hp(-5),
     left: 0,
-    width: 408,
-    height: 284,
+    width: wp(100),
+    height: hp(40),
     position: "absolute",
   },
   icon1: {
-    top: 150,
+    top: hp(20),
     left: 0,
-    width: 188,
-    height: 172,
+    width: wp(50),
+    height: hp(30),
     position: "absolute",
   },
   icon2: {
@@ -207,15 +207,15 @@ const styles = StyleSheet.create({
     position: "absolute",
   },
   iphoneMain: {
-    paddingTop: "5%",
+    
     backgroundColor: Color.colorWhite,
-    flex: 1,
+    flex: wp(100),
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
-    height: 852,
+    height: hp(100),
     overflow: "hidden",
-    width: "100%",
+    width:wp(100),
   },
 });
 

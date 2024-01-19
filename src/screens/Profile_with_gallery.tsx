@@ -13,19 +13,21 @@ import { MainStackParamList } from "../types/navigation";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Layout, Text, Button } from "react-native-rapi-ui";
 import { supabase } from "../initSupabase";
-import * as ImagePicker from "expo-image-picker";
+
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system";
 import Push from "../components/Push";
 import { Camera } from "expo-camera";
 import { Video } from "expo-av";
 import { shareAsync } from "expo-sharing";
+
+import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
+
 import { Ionicons } from "@expo/vector-icons";
 import ModalWindowSend from "./ModalWindowSend";
 import ModalWindow from "./ModalWindow";
 import { useIsFocused } from "@react-navigation/native";
-import axios from "axios";
 
 export default function ({
   navigation,
@@ -46,49 +48,11 @@ export default function ({
   const [description, setDescription] = useState("");
   const [videoList, setVideoList] = useState([]);
   const [cameraOrientation, setCameraOrientation] = useState("portrait");
-  const [isUploadComplete, setIsUploadComplete] = useState(false);
-  const [isGetUrlComplete, setIsGetUrlComplete] = useState(false);
-  const [uploadUrl, setUploadUrl] = useState("");
-  const [savePath, setSavePath] = useState("")
+  const [isComplete, setIsComplete] = useState(false);
+  const [previousUri, setPreviousUri] = useState(null);
+  const [image, setImage] = useState(null);
 
   const isFocused = useIsFocused(); // 포커스 시 변경
-
-  const uploadVideo = async (imageBase64) => {
-    const videoName = `${session.user.email}_${getCurrentDateTime()}`;
-    setSavePath(videoName)
-    var { data, error } = await supabase.storage
-      .from("videos")
-      .upload(`videos/${videoName}.mp4`, decode(imageBase64), {
-        contentType: "video/mp4",
-      });
-    if (error) {
-      console.log(error);
-    } else {
-      console.log("파일업로드완료", data);
-      setIsUploadComplete(true);
-    }
-  };
-
-  const uploadData=async(uploadUrl,savePath)=>{
-    var { error } = await supabase.from("uploadData").insert({
-      video: `https://fydgwkkgfigeihwzhekm.supabase.co/storage/v1/object/public/videos/videos/${savePath}.mp4`,
-      email: session.user.email,
-      title: title,
-      googledriveurl: uploadUrl,
-    });
-
-    if (error) {
-      console.log("에러발생:", error);
-    } else {
-      console.log("전송완료");
-    }
-  }
-
-  useEffect(()=>{
-    if(uploadUrl&&savePath){
-      uploadData(uploadUrl,savePath)
-    }
-  },[uploadUrl])
 
   useEffect(() => {
     const getPermission = async () => {
@@ -111,6 +75,13 @@ export default function ({
   }, [isFocused]);
 
   useEffect(() => {
+    if (video && video?.uri && video?.uri !== previousUri) {
+      saveVideo();
+      setPreviousUri(video?.uri); // 현재 URI를 이전 URI로 저장
+    }
+  }, [video]);
+
+  useEffect(() => {
     const subscription = Dimensions.addEventListener("change", ({ window }) => {
       if (window.width < window.height) {
         setCameraOrientation("portrait");
@@ -118,11 +89,10 @@ export default function ({
         setCameraOrientation("landscape");
       }
     });
-
     return () => subscription.remove();
   }, []);
 
-  console.log(uploadUrl);
+  // console.log("imageBase64:", imageBase64);
   if (
     hasCameraPermission === undefined ||
     hasMicrophonePermission === undefined
@@ -136,52 +106,108 @@ export default function ({
     );
   }
 
+  const uploadImage = async (imageBase64) => {
+    const videoName = `${session.user.email}_${getCurrentDateTime()}`;
+
+    var { data, error } = await supabase.storage
+      .from("videos")
+      .upload(`videos/${videoName}.mp4`, decode(imageBase64), {
+        contentType: "video/mp4",
+      });
+    if (error) {
+      console.log(error);
+    } else {
+      console.log("파일업로드완료", data);
+      setIsComplete(true);
+    }
+
+    var { error } = await supabase.from("uploadData").insert({
+      video: `https://fydgwkkgfigeihwzhekm.supabase.co/storage/v1/object/public/videos/videos/${videoName}.mp4`,
+      email: session.user.email,
+      title: title,
+      address: address,
+      description: description,
+    });
+
+    if (error) {
+      console.log("에러발생:", error);
+    } else {
+      console.log("전송완료");
+    }
+  };
+
   let recordVideo = () => {
     setIsRecording(true);
     let options = {
-      quality: Camera.Constants.VideoQuality["720p"],
-      maxDuration: 5, // 녹화 최대 지속 시간 (초 단위)
+      
+      // quality: Camera.Constants.VideoQuality["720p"],
+      maxDuration: 1800, // 녹화 최대 지속 시간 (초 단위)
       mute: false, // 오디오 녹음 여부
       fileFormat: "mp4", // MP4 형식으로 저장
+      
     };
     cameraRef.current.recordAsync(options).then(async (recordedVideo: any) => {
       setVideo(recordedVideo);
       setIsRecording(false);
-      setIsModalVisible(true);
+      
     });
   };
 
-  let stopRecording = async () => {
-    cameraRef?.current.stopRecording();
-    setIsRecording(false);
-  };
+  // let saveVideo = () => {
+  //   if (video && video?.uri) {
+  //     MediaLibrary.saveToLibraryAsync(video?.uri)
+  //       .then(() => {
+          
+  //         console.log("Video saved:",video?.uri);
+  //         setVideo(undefined); // 비디오 저장 후 video 상태 초기화
+  //       })
+  //       .catch((error) => {
+  //         console.error("Error saving video:", error);
+  //       });
+  //   }
+  // };
 
-  const fetchGoogleDrive = async () => {
-    const headers = {
-      "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-      Connection: "keep-alive",
-      Referer: "http://3.38.97.252/docs",
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Accept: "application/json",
-    };
-
-    const params = {
-      useremail: "ljj90703001@gmail.com",
-    };
-
-    try {
-      const response = await axios.get("https://y7c3hqick3zvhfeq2eemafyysa0audcu.lambda-url.ap-northeast-2.on.aws/getPath", {
-        params,
-        headers,
-      });
-      // console.log(response.data);
-      setUploadUrl(response.data);
-      setIsGetUrlComplete(true);
-    } catch (error) {
-      console.error("Error:", error);
+  let saveVideo = async () => {
+    if (video && video?.uri) {
+      const result=await MediaLibrary.saveToLibraryAsync(video?.uri)
+      console.log("Video saved:",video?.uri);
+      setVideo(undefined); // 비디오 저장 후 video 상태 초기화
     }
   };
+
+  let stopRecording = async () => {
+    if (cameraRef.current) {
+      await cameraRef?.current.stopRecording();
+      setIsRecording(false);
+      await saveVideo();
+    }
+  };
+
+  const pickImage = async () => {
+    // 사용자에게 미디어 라이브러리 접근 권한 요청
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== "granted") {
+      alert("미디어 라이브러리 접근 권한이 필요합니다!");
+      return;
+    }
+
+    // 이미지 피커를 사용하여 이미지 선택
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+      
+    });
+
+    if (result) {
+      setImage(result.assets[0]?.uri);
+      setIsModalVisible(true);
+      console.log("path:",result)
+    }
+  };
+
+  console.log('image:',image)
 
   return (
     <Layout>
@@ -199,15 +225,12 @@ export default function ({
           isModalVisible={isModalVisible}
           setIsModalVisible={setIsModalVisible}
           video={video}
-          uploadVideo={uploadVideo}
-          isUploadComplete={isUploadComplete}
-          setIsUploadComplete={setIsUploadComplete}
-          fetchGoogleDrive={fetchGoogleDrive}
-          uploadUrl={uploadUrl}
-          setUploadUrl={setUploadUrl}
-          isGetUrlComplete={isGetUrlComplete}
-          setIsGetUrlComplete={setIsGetUrlComplete}
+          uploadImage={uploadImage}
+          isComplete={isComplete}
+          setIsComplete={setIsComplete}
+          image={image}
         ></ModalWindowSend>
+
         {isFocused && (
           <Camera style={{ flex: 1, justifyContent: "center" }} ref={cameraRef}>
             <View style={styles.buttonContainer}>
@@ -219,6 +242,16 @@ export default function ({
                   alignItems: "center",
                 }}
               >
+                {/* <View style={{}}>
+                  <TouchableOpacity onPress={pauseVideo}>
+                    <Ionicons
+                      name={"pause-circle"}
+                      style={{}}
+                      size={40}
+                      color={"#F90"}
+                    />
+                  </TouchableOpacity>
+                </View> */}
                 <View
                   style={{
                     backgroundColor: "#DE4743",
@@ -238,18 +271,55 @@ export default function ({
                       <TouchableOpacity
                         onPress={() => {
                           stopRecording();
-                          setIsModalVisible(true);
+                          
                         }}
                       >
                         <Ionicons name={"stop"} size={40} color={"white"} />
                       </TouchableOpacity>
                     ) : (
                       <TouchableOpacity onPress={recordVideo}>
-                        <Ionicons name={"stop"} size={40} color={"#DE4743"} />
+                        <Ionicons
+                          name={"stop"}
+                          size={40}
+                          color={"#DE4743"}
+                          // onPress={recordVideo}
+                        />
                       </TouchableOpacity>
                     )}
                   </View>
                 </View>
+                <View style={{}}>
+                  <View
+                    style={{
+                      flex: 1,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <TouchableOpacity onPress={()=>{
+                      
+                      pickImage();
+                      
+                    }}>
+                      <Ionicons
+                        name={"image"}
+                        size={40}
+                        color={"white"}
+                        // onPress={recordVideo}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                {/* <View style={{}}>
+                  <TouchableOpacity onPress={resumeVideo}>
+                    <Ionicons
+                      name={"play-circle"}
+                      style={{}}
+                      size={40}
+                      color={"#F90"}
+                    />
+                  </TouchableOpacity>
+                </View> */}
               </View>
             </View>
           </Camera>

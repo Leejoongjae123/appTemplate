@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity,Linking } from "react-native";
 import {
   Layout,
   TextInput,
@@ -21,6 +21,9 @@ import Animated, {
   withSequence,
 } from 'react-native-reanimated';
 
+import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
+
+
 export default function ModalWindow({
   title,
   setTitle,
@@ -31,34 +34,20 @@ export default function ModalWindow({
   isModalVisible,
   setIsModalVisible,
   video,
-  uploadImage,
-  isComplete,
-  setIsComplete,
+  uploadVideo,
+  isUploadComplete,
+  setIsUploadComplete,
+  fetchGoogleDrive,
+  uploadUrl,
+  setUploadUrl,
+  isGetUrlComplete,
+  setIsGetUrlComplete
 }) {
   const [isSend, setIsSend] = useState(false);
 
   const [progressValue, setProgressValue] = useState(0);
 
-  useEffect(() => {
-    setProgressValue(-20);
-    // 5초 후에 progressValue를 30으로 변경
-
-    const timer1 = setTimeout(() => {
-      setProgressValue(20);
-    }, 3000);
-
-    // 15초 후에 progressValue를 80으로 변경
-    const timer2 = setTimeout(() => {
-      setProgressValue(50);
-    }, 6000);
-    // 컴포넌트가 언마운트될 때 타이머를 정리합니다.
-    return () => {
-      if (!isComplete) {
-        clearTimeout(timer1);
-        clearTimeout(timer2);
-      }
-    };
-  }, [isModalVisible]);
+  
 
   const onPressModalOpen = () => {
     console.log("팝업을 여는 중입니다.");
@@ -69,37 +58,28 @@ export default function ModalWindow({
     const base64 = await FileSystem.readAsStringAsync(video.uri, {
       encoding: "base64",
     });
-    uploadImage(base64);
-    setTitle("");
-    setAddress("");
-    setDescription("");
+    uploadVideo(base64)
+    fetchGoogleDrive()
   };
 
   const onPressModalClose2 = async () => {
     setIsModalVisible(false);
     setIsSend(false);
+    setIsUploadComplete(false);
+    setIsGetUrlComplete(false)
+    setIsSend(false);
+    setUploadUrl("")
+    setTitle("")
+    setAddress("")
+    setDescription("")
   };
 
-  useEffect(() => {
-    // isComplete가 true로 변경될 때 타이머를 설정합니다.
-    if (isComplete) {
-      const timer = setTimeout(() => {
-        setIsModalVisible(false);
-        setIsComplete(false);
-        setIsSend(false);
-      }, 3000);
 
-      // 컴포넌트가 언마운트될 때 타이머를 정리합니다.
-      return () => clearTimeout(timer);
-    }
-  }, [isComplete]);
 
   const ANGLE = 10;
   const TIME = 100;
   const EASING = Easing.elastic(1.5);
-
   const rotation = useSharedValue(0);
-
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotateZ: `${rotation.value}deg` }],
   }));
@@ -120,9 +100,45 @@ export default function ModalWindow({
       // go back to 0 at the end
       withTiming(0, { duration: TIME / 2, easing: EASING })
     );
-  },[isComplete])
+  },[isUploadComplete])
 
-  if (!isComplete) {
+  // useEffect(() => {
+  //   // isUploadComplete가 true로 변경될 때 타이머를 설정합니다.
+  //   if (isUploadComplete) {
+  //     const timer = setTimeout(() => {
+  //       setIsUploadComplete(false);
+  //       setIsGetUrlComplete(false)
+  //       setIsSend(false);
+  //       setUploadUrl("")
+  //     }, 5000);
+
+  //     // 컴포넌트가 언마운트될 때 타이머를 정리합니다.
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [isUploadComplete]);
+
+  useEffect(() => {
+    setProgressValue(-20);
+    // 5초 후에 progressValue를 30으로 변경
+
+    const timer1 = setTimeout(() => {
+      setProgressValue(20);
+    }, 3000);
+
+    // 15초 후에 progressValue를 80으로 변경
+    const timer2 = setTimeout(() => {
+      setProgressValue(50);
+    }, 6000);
+    // 컴포넌트가 언마운트될 때 타이머를 정리합니다.
+    return () => {
+      if (!isUploadComplete) {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      }
+    };
+  }, [isModalVisible]);
+
+  if (!(isUploadComplete&&isGetUrlComplete)) {
     return (
       <Modal animationType="fade" visible={isModalVisible} transparent={true}>
         <View style={styles.centeredView}>
@@ -210,79 +226,32 @@ export default function ModalWindow({
               </View>
               <View>
                 <Text style={styles.modalTextStyle}>
-                  음식점에 대한 정보를 입력해주세요.
+                  {`영상에 대한\n정보를 입력해주세요.`}
                 </Text>
               </View>
-              <View style={{ marginTop: 26 }}>
-                <Text
-                  style={{ fontSize: 13, fontWeight: "900", textAlign: "left" }}
-                >
-                  상호 또는 음식이름
-                </Text>
-              </View>
-              <View style={{ width: "100%", height: 37 }}>
+
+              <View style={{ width: "100%",marginVertical:hp(3)}}>
                 <TextInput
+                  placeholder="맛, 장소, 특징 등등.."
+                  style={{height:hp(8)}}
                   value={title}
                   onChangeText={(val) => {
                     setTitle(val);
                   }}
                 ></TextInput>
               </View>
-              <View>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: "900",
-                    textAlign: "left",
-                    marginTop: 15,
-                  }}
-                >
-                  음식점 주소
-                </Text>
-              </View>
-              <View style={{ width: "100%", height: 37 }}>
-                <TextInput
-                  value={address}
-                  onChangeText={(val) => {
-                    setAddress(val);
-                  }}
-                ></TextInput>
-              </View>
-              <View>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: "900",
-                    textAlign: "left",
-                    marginTop: 15,
-                  }}
-                >
-                  상세정보
-                </Text>
-              </View>
-              <View style={{ width: "100%", height: "20%" }}>
-                <TextInput
-                  multiline={true}
-                  value={description}
-                  onChangeText={(val) => {
-                    setDescription(val);
-                  }}
-                  placeholder="음식의 특징, 재료 등 영상 자막에 들어가면 좋을만한 정보를 기입해주세요"
-                  style={{ fontSize: 13, fontWeight: "900", textAlign: "left" }}
-                ></TextInput>
-              </View>
+              
 
-              <View style={{ marginTop: 34 }}>
+              <View style={{}}>
                 <View
                   style={{
-                    marginLeft: "15%",
                     justifyContent: "center",
                     alignItems: "center",
                   }}
                 >
                   <Button
                     color="#F90"
-                    width={164}
+                    width={wp(30)}
                     text={"업로드"}
                     onPress={()=>{
                       onPressModalClose()
@@ -296,7 +265,7 @@ export default function ModalWindow({
         </View>
       </Modal>
     );
-  } else {
+  } else{
     return (
       <Modal animationType="fade" visible={isModalVisible} transparent={true}>
         <View style={styles.centeredView}>
@@ -316,7 +285,7 @@ export default function ModalWindow({
                   textAlign: "center",
                 }}
               >
-                업로드가 완료됐습니다.
+                인증이 완료됐습니다.
               </Text>
               <Text
                 style={{
@@ -325,8 +294,10 @@ export default function ModalWindow({
                   textAlign: "center",
                 }}
               >
-                빠른 시일 내 검수하겠습니다!
+                아래의 경로로 본 영상을 업로드해주세요!
               </Text>
+              <HyperlinkText url={uploadUrl} text={uploadUrl}></HyperlinkText>
+
             </View>
             <Animated.View
               style={[
@@ -395,3 +366,19 @@ const styles = StyleSheet.create({
     marginVertical: 50,
   },
 });
+
+
+// 하이퍼링크로 구글 드라이브 경로를 알려줌
+const HyperlinkText = ({ url, text }) => {
+  const handlePress = () => {
+    Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
+  };
+
+  return (
+    <TouchableOpacity onPress={handlePress}>
+      <Text style={{ textAlign:'center',justifyContent:'center',alignItems:'center',color: 'blue', textDecorationLine: 'underline' }}>
+        {text}
+      </Text>
+    </TouchableOpacity>
+  );
+};

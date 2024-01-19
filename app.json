@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "렛츠두잇",
+    "name": "LetsDoEat",
     "slug": "supa-push",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/doeat.png",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",

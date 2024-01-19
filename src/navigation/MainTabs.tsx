@@ -19,9 +19,7 @@ const MainTabs = () => {
   return (
     <Tabs.Navigator
       initialRouteName="Home"
-      
       screenOptions={{
-        
         tabBarActiveTintColor: 'danger',
         tabBarInactiveTintColor: 'gray',
         headerShown: false,
