@@ -23,7 +23,7 @@ import {
   Picker,
 } from "react-native-rapi-ui";
 import { FontSize, Color } from "../GlobalStyles";
-import ModalWindow from "../ModalWindow";
+import ModalWindowRegister from "../ModalWindowRegister";
 import "react-native-url-polyfill/auto";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -101,10 +101,6 @@ export default function ({
         setUid(user?.id);
         setLoading(false);
       }
-      if (isModalVisible === false) {
-        // navigation.navigate("Login");
-        console.log("1234");
-      }
     } else{
       setIsModalVisible(true)
       setTitle("중복된 이메일로 가입할 수 없습니다.")
@@ -117,6 +113,12 @@ export default function ({
     updateProfile();
     getRef()
   }, [uid]);
+
+  // useEffect(()=>{
+  //   if(!isModalVisible){
+  //     navigation.navigate("Login")
+  //   }
+  // },[isModalVisible])
 
   const updateProfile = async () => {
     try {
@@ -159,12 +161,13 @@ export default function ({
             flexDirection: "column",
           }}
         >
-          <ModalWindow
+          <ModalWindowRegister
             title={title}
             isModalVisible={isModalVisible}
             setIsModalVisible={setIsModalVisible}
             ButtonText={buttonText}
-          ></ModalWindow>
+            navigation={navigation}
+          ></ModalWindowRegister>
 
           <View
             style={{
