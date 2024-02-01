@@ -22,7 +22,8 @@
         "NSCameraUsageDescription": "$(PRODUCT_NAME) needs access to your Camera.",
         "NSMicrophoneUsageDescription": "$(PRODUCT_NAME) needs access to your Microphone."
       },
-      "bundleIdentifier": "com.ljj3347.supapush"
+      "bundleIdentifier": "com.ljj3347.supapush",
+      "buildNumber":"3"
     },
     "android": {
       "adaptiveIcon": {

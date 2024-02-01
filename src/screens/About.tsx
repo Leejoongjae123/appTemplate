@@ -53,7 +53,7 @@ export default function ({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const authInfo = useContext(AuthContext);
+  const authInfo:any = useContext(AuthContext);
 
   const updateProfile = async () => {
     try {

@@ -167,7 +167,7 @@ export default function ({
     };
 
     const params = {
-      useremail: "ljj90703001@gmail.com",
+      useremail: session.user.email,
     };
 
     try {

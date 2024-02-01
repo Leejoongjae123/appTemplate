@@ -9,7 +9,7 @@ import { View } from "react-native";
 
 import Home from "../screens/Home";
 import About from "../screens/About";
-import Profile from "../screens/Profile";
+import Camera from "../screens/Camera";
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import SecondScreen from "../screens/SecondScreen";
 
@@ -46,8 +46,8 @@ const MainTabs = () => {
       />
       
       <Tabs.Screen
-        name="Profile"
-        component={Profile}
+        name="Camera"
+        component={Camera}
         onPress={()=>{
           
         }}
